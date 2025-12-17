@@ -1,17 +1,18 @@
+export { effectScope, isEffectScope, isEffect } from "alien-signals"
 export * from "./core";
 export * from "./deepSignal";
 export * from "./watch"
 export * from "./watchEffect"
 export {
   isArray,
-  isDate,
   isFunction,
   isMap,
   isObject,
   isPlainObject,
-  isPromise,
-  isRegExp,
   isSet,
-  isString,
-  isSymbol,
+  isSignal,
+  isComputed,
+  unSignal,
+  toValue,
 } from "./utils"
+export type { MaybeSignal, MaybeSignalOrGetter } from "./utils"

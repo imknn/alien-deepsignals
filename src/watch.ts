@@ -1,7 +1,7 @@
-import { Computed, Effect, isSignal, Signal } from './core';
-import { hasChanged, isArray, isFunction, isMap, isObject, isPlainObject, isSet, NOOP } from './utils';
+import { Computed, Effect, Signal } from './core';
+import { hasChanged, isArray, isComputed, isFunction, isMap, isObject, isPlainObject, isSet, isSignal, NOOP } from './utils';
 import { isDeepSignal, isShallow } from "./deepSignal"
-import { ReactiveFlags } from './contents';
+import { SignalFlags } from './contents';
 
 export type OnCleanup = (cleanupFn: () => void) => void
 export type WatchEffect = (onCleanup: OnCleanup) => void
@@ -98,7 +98,7 @@ export function watch(
     }
   }
 
-  if (isSignal(source)) {
+  if (isSignal(source) || isComputed(source)) {
     getter = () => source.value
     forceTrigger = isShallow(source)
   } else if (isDeepSignal(source)) {
@@ -109,7 +109,7 @@ export function watch(
     forceTrigger = source.some(s => isDeepSignal(s) || isShallow(s))
     getter = () =>
       source.map(s => {
-        if (isSignal(s)) {
+        if (isSignal(s) || isComputed(s)) {
           return s.value
         } else if (isDeepSignal(s)) {
           return signalGetter(s)
@@ -158,11 +158,10 @@ export function watch(
     : INITIAL_WATCHER_VALUE
 
   const job = (immediateFirstRun?: boolean) => {
-    if (!effect.active || (!immediateFirstRun && !effect.dirty)) {
+    if ((!immediateFirstRun && !effect.shouldUpdate)) {
       return
     }
     if (cb) {
-      // watch(source, cb)
       const newValue = effect.run()
 
       if (
@@ -218,7 +217,7 @@ export function traverse(
   depth: number = Infinity,
   seen?: Set<unknown>,
 ): unknown {
-  if (depth <= 0 || !isObject(value) || (value as any)[ReactiveFlags.SKIP]) {
+  if (depth <= 0 || !isObject(value) || (value as any)[SignalFlags.SKIP]) {
     return value
   }
 
@@ -228,7 +227,7 @@ export function traverse(
   }
   seen.add(value)
   depth--
-  if (isSignal(value)) {
+  if (isSignal(value) || isComputed(value)) {
     traverse(value.value, depth, seen)
   } else if (isArray(value)) {
     for (let i = 0; i < value.length; i++) {
