@@ -64,6 +64,6 @@ watch(state,(value)=>{
 },{
   deep: true,
   immediate: true,
-  // once
+  // once: false
 })
 ```
